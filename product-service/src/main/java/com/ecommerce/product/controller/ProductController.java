@@ -6,6 +6,8 @@ import com.ecommerce.product.service.ProductService;
 
 import jakarta.validation.Valid;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,5 +25,17 @@ public class ProductController {
     @ResponseStatus(HttpStatus.CREATED)
     public ProductResponse createProduct(@Valid @RequestBody ProductRequest request) {
         return productService.createProduct(request);
+    }
+    
+    @GetMapping("/{id}")
+    public ProductResponse getProductById(@PathVariable Long id) {
+
+        return productService.getProductById(id);
+    }
+    
+    @GetMapping
+    public Page<ProductResponse> getAllProducts(Pageable pageable) {
+
+        return productService.getAllProducts(pageable);
     }
 }
