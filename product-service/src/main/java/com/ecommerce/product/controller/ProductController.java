@@ -33,6 +33,7 @@ public class ProductController {
         return productService.getProductById(id);
     }
     
+//    http://localhost:8081/api/v1/products?page=1&size=5&sort=price,desc
     @GetMapping
     public Page<ProductResponse> getAllProducts(Pageable pageable) {
 
