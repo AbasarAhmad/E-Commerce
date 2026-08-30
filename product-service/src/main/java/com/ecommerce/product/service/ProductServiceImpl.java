@@ -3,6 +3,7 @@ package com.ecommerce.product.service;
 import com.ecommerce.product.dto.ProductRequest;
 import com.ecommerce.product.dto.ProductResponse;
 import com.ecommerce.product.entity.Product;
+import com.ecommerce.product.exception.DuplicateSkuException;
 import com.ecommerce.product.exception.ProductNotFoundException;
 import com.ecommerce.product.mapper.ProductMapper;
 import com.ecommerce.product.repository.ProductRepository;
@@ -23,13 +24,24 @@ public class ProductServiceImpl implements ProductService {
         this.productMapper = productMapper;
     }
 
+//    @Override
+//    public ProductResponse createProduct(ProductRequest request) {
+//        Product product = productMapper.toEntity(request);
+//        Product savedProduct = productRepository.save(product);
+//        return productMapper.toResponse(savedProduct);
+//    }
+
+    
     @Override
     public ProductResponse createProduct(ProductRequest request) {
+        if (productRepository.existsBySku(request.getSku())) {
+            throw new DuplicateSkuException("Product with SKU '" + request.getSku() + "' already exists");
+        }
         Product product = productMapper.toEntity(request);
         Product savedProduct = productRepository.save(product);
+
         return productMapper.toResponse(savedProduct);
     }
-
     
     @Override
     public ProductResponse getProductById(Long id) {

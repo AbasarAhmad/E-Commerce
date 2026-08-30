@@ -44,4 +44,18 @@ public class GlobalExceptionHandler {
                 .message(exception.getMessage())
                 .build();
     }
+    
+    
+    
+    @ExceptionHandler(DuplicateSkuException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handleDuplicateSkuException(
+            DuplicateSkuException exception) {
+
+        return ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.CONFLICT.value())
+                .message(exception.getMessage())
+                .build();
+    }
 }
