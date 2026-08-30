@@ -19,38 +19,57 @@ public class ProductServiceImpl implements ProductService {
     public ProductServiceImpl(
             ProductRepository productRepository,
             ProductMapper productMapper) {
-
         this.productRepository = productRepository;
         this.productMapper = productMapper;
     }
 
     @Override
     public ProductResponse createProduct(ProductRequest request) {
-
         Product product = productMapper.toEntity(request);
-
         Product savedProduct = productRepository.save(product);
-
         return productMapper.toResponse(savedProduct);
     }
 
+    
     @Override
     public ProductResponse getProductById(Long id) {
-
         Product product = productRepository.findById(id)
-                .orElseThrow(() ->
-                        new ProductNotFoundException(
-                                "Product not found with id: " + id
-                        )
-                );
-
+                .orElseThrow(() ->new ProductNotFoundException("Product not found with id: " + id));
         return productMapper.toResponse(product);
     }
 
+    
+    
     @Override
     public Page<ProductResponse> getAllProducts(Pageable pageable) {
-
         return productRepository.findAll(pageable)
                 .map(productMapper::toResponse);
+    }
+    
+    
+    
+    @Override
+    public ProductResponse updateProduct(Long id, ProductRequest request) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() ->new ProductNotFoundException("Product not found with id: " + id));
+        
+        product.setName(request.getName());
+        product.setDescription(request.getDescription());
+        product.setSku(request.getSku());
+        product.setPrice(request.getPrice());
+        product.setQuantity(request.getQuantity());
+        product.setCategory(request.getCategory());
+        product.setStatus(request.getStatus());
+        Product updatedProduct = productRepository.save(product);
+        return productMapper.toResponse(updatedProduct);
+    }
+    
+    
+    
+    @Override
+    public void deleteProduct(Long id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() ->new ProductNotFoundException("Product not found with id: " + id));
+        productRepository.delete(product);
     }
 }
