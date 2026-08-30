@@ -2,6 +2,7 @@ package com.ecommerce.product.controller;
 
 import com.ecommerce.product.dto.ProductRequest;
 import com.ecommerce.product.dto.ProductResponse;
+import com.ecommerce.product.dto.ProductSearchRequest;
 import com.ecommerce.product.service.ProductService;
 
 import jakarta.validation.Valid;
@@ -10,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+
 
 @RestController
 @RequestMapping("/api/v1/products")
@@ -64,5 +66,15 @@ public class ProductController {
     @GetMapping("/search")
     public Page<ProductResponse> searchProducts(@RequestParam String name,Pageable pageable) {
         return productService.searchProducts(name, pageable);
+    }
+    
+    
+//    http://localhost:8081/api/v1/products/search?category=MOBILE  => Category
+//    http://localhost:8081/api/v1/products/search?category=MOBILE&status=ACTIVE  => Category + Test
+//    http://localhost:8081/api/v1/products/search?minPrice=50000&maxPrice=200000  => Price Range
+//    http://localhost:8081/api/v1/products/search?name=iphone&category=MOBILE&status=ACTIVE&minPrice=50000&maxPrice=300000&page=0&size=5&sort=price,desc => All Filter
+    @GetMapping("/advance/search")
+    public Page<ProductResponse> searchProducts(ProductSearchRequest searchRequest,Pageable pageable) {
+        return productService.searchProducts(searchRequest,pageable);
     }
 }

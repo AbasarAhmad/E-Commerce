@@ -1,0 +1,33 @@
+
+What is JpaSpecificationExecutor?
+Ans:  It gives our repository the ability to execute dynamic specifications.
+
+category provided?
+      ↓
+YES → add category condition
+
+status provided?
+      ↓
+YES → add status condition
+
+minPrice provided?
+      ↓
+YES → add price >= minPrice
+
+maxPrice provided?
+      ↓
+YES → add price <= maxPrice
+
+
+
+What is Specification?
+→ A reusable definition of the WHERE conditions for a query.
+
+What is Root?
+→ Root represents the entity/table we are querying.
+
+What is CriteriaBuilder?
+→ CriteriaBuilder helps us build query conditions/predicates.
+
+What is Predicate?
+-> A Predicate represents a condition.
