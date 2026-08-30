@@ -84,4 +84,14 @@ public class ProductServiceImpl implements ProductService {
                 .orElseThrow(() ->new ProductNotFoundException("Product not found with id: " + id));
         productRepository.delete(product);
     }
+    
+    
+    
+    @Override
+    public Page<ProductResponse> searchProducts(String name,Pageable pageable) {
+
+        return productRepository
+                .findByNameContainingIgnoreCase(name, pageable)
+                .map(productMapper::toResponse);
+    }
 }

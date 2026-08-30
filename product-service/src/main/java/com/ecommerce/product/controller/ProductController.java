@@ -56,4 +56,13 @@ public class ProductController {
     public void deleteProduct(@PathVariable Long id) {
         productService.deleteProduct(id);
     }
+    
+    
+//    http://localhost:8081/api/v1/products/search?name=iphone   =======>  For Search
+//    http://localhost:8081/api/v1/products/search?name=iphone&page=0&size=2  ======>  For pagination
+//    http://localhost:8081/api/v1/products/search?name=iphone&page=0&size=5&sort=price,desc    ===> for Sorting
+    @GetMapping("/search")
+    public Page<ProductResponse> searchProducts(@RequestParam String name,Pageable pageable) {
+        return productService.searchProducts(name, pageable);
+    }
 }
