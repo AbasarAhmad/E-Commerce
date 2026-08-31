@@ -1,5 +1,6 @@
 package com.ecommerce.product.service;
 
+import com.ecommerce.product.dto.ProductPageResponse;
 import com.ecommerce.product.dto.ProductRequest;
 import com.ecommerce.product.dto.ProductResponse;
 import com.ecommerce.product.dto.ProductSearchRequest;
@@ -56,10 +57,31 @@ public class ProductServiceImpl implements ProductService {
 
     
     
+//    @Override
+//    public Page<ProductResponse> getAllProducts(Pageable pageable) {
+//        return productRepository.findAll(pageable)
+//                .map(productMapper::toResponse);
+//    }
+    
     @Override
-    public Page<ProductResponse> getAllProducts(Pageable pageable) {
-        return productRepository.findAll(pageable)
-                .map(productMapper::toResponse);
+    public ProductPageResponse getAllProducts(Pageable pageable) {
+
+        Page<Product> productPage =productRepository.findAll(pageable);
+
+        return ProductPageResponse.builder()
+                .content(
+                        productPage.getContent()
+                                .stream()
+                                .map(productMapper::toResponse)
+                                .toList()
+                )
+                .page(productPage.getNumber())
+                .size(productPage.getSize())
+                .totalElements(productPage.getTotalElements())
+                .totalPages(productPage.getTotalPages())
+                .first(productPage.isFirst())
+                .last(productPage.isLast())
+                .build();
     }
     
     
@@ -100,8 +122,24 @@ public class ProductServiceImpl implements ProductService {
     }
     
     
+//    @Override
+//    public Page<ProductResponse> searchProducts(ProductSearchRequest searchRequest,Pageable pageable) {
+//        Specification<Product> specification =
+//                ProductSpecification.filterProducts(
+//                        searchRequest.getName(),
+//                        searchRequest.getCategory(),
+//                        searchRequest.getStatus(),
+//                        searchRequest.getMinPrice(),
+//                        searchRequest.getMaxPrice()
+//                );
+//
+//        return productRepository
+//                .findAll(specification, pageable)
+//                .map(productMapper::toResponse);
+//    }
+    
     @Override
-    public Page<ProductResponse> searchProducts(ProductSearchRequest searchRequest,Pageable pageable) {
+    public ProductPageResponse searchProducts(ProductSearchRequest searchRequest,Pageable pageable) {
         Specification<Product> specification =
                 ProductSpecification.filterProducts(
                         searchRequest.getName(),
@@ -110,9 +148,21 @@ public class ProductServiceImpl implements ProductService {
                         searchRequest.getMinPrice(),
                         searchRequest.getMaxPrice()
                 );
+        Page<Product> productPage =productRepository.findAll(specification, pageable);
 
-        return productRepository
-                .findAll(specification, pageable)
-                .map(productMapper::toResponse);
+        return ProductPageResponse.builder()
+                .content(
+                        productPage.getContent()
+                                .stream()
+                                .map(productMapper::toResponse)
+                                .toList()
+                )
+                .page(productPage.getNumber())
+                .size(productPage.getSize())
+                .totalElements(productPage.getTotalElements())
+                .totalPages(productPage.getTotalPages())
+                .first(productPage.isFirst())
+                .last(productPage.isLast())
+                .build();
     }
 }

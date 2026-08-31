@@ -1,5 +1,6 @@
 package com.ecommerce.product.service;
 
+import com.ecommerce.product.dto.ProductPageResponse;
 import com.ecommerce.product.dto.ProductRequest;
 import com.ecommerce.product.dto.ProductResponse;
 import com.ecommerce.product.dto.ProductSearchRequest;
@@ -11,9 +12,11 @@ public interface ProductService {
 
 	ProductResponse createProduct(ProductRequest request);
 	 ProductResponse getProductById(Long id);
-	 Page<ProductResponse> getAllProducts(Pageable pageable);
+//	 Page<ProductResponse> getAllProducts(Pageable pageable);
+	 ProductPageResponse getAllProducts(Pageable pageable);
 	 ProductResponse updateProduct(Long id, ProductRequest request);
 	 void deleteProduct(Long id);
 	 Page<ProductResponse> searchProducts(String name,Pageable pageable);
-	 Page<ProductResponse> searchProducts(ProductSearchRequest searchRequest,Pageable pageable);
+//	 Page<ProductResponse> searchProducts(ProductSearchRequest searchRequest,Pageable pageable);
+	 ProductPageResponse searchProducts(ProductSearchRequest searchRequest,Pageable pageable);
 }

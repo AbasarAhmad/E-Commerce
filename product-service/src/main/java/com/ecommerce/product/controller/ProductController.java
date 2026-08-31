@@ -1,5 +1,6 @@
 package com.ecommerce.product.controller;
 
+import com.ecommerce.product.dto.ProductPageResponse;
 import com.ecommerce.product.dto.ProductRequest;
 import com.ecommerce.product.dto.ProductResponse;
 import com.ecommerce.product.dto.ProductSearchRequest;
@@ -39,12 +40,18 @@ public class ProductController {
     
     
 //    http://localhost:8081/api/v1/products?page=1&size=5&sort=price,desc
+//    @GetMapping
+//    public Page<ProductResponse> getAllProducts(Pageable pageable) {
+//
+//        return productService.getAllProducts(pageable);
+//    }
+//    
+    
     @GetMapping
-    public Page<ProductResponse> getAllProducts(Pageable pageable) {
+    public ProductPageResponse getAllProducts(Pageable pageable) {
 
         return productService.getAllProducts(pageable);
     }
-    
     
     @PutMapping("/{id}")
     public ProductResponse updateProduct(@PathVariable Long id,@Valid @RequestBody ProductRequest request) {
@@ -73,8 +80,14 @@ public class ProductController {
 //    http://localhost:8081/api/v1/products/search?category=MOBILE&status=ACTIVE  => Category + Test
 //    http://localhost:8081/api/v1/products/search?minPrice=50000&maxPrice=200000  => Price Range
 //    http://localhost:8081/api/v1/products/search?name=iphone&category=MOBILE&status=ACTIVE&minPrice=50000&maxPrice=300000&page=0&size=5&sort=price,desc => All Filter
+//    @GetMapping("/advance/search")
+//    public Page<ProductResponse> searchProducts(ProductSearchRequest searchRequest,Pageable pageable) {
+//        return productService.searchProducts(searchRequest,pageable);
+//    }
+    
+    
     @GetMapping("/advance/search")
-    public Page<ProductResponse> searchProducts(ProductSearchRequest searchRequest,Pageable pageable) {
+    public ProductPageResponse searchProducts(ProductSearchRequest searchRequest,Pageable pageable) {
         return productService.searchProducts(searchRequest,pageable);
     }
 }
