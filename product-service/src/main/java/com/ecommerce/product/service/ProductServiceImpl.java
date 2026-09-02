@@ -15,6 +15,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ProductServiceImpl implements ProductService {
@@ -54,8 +55,6 @@ public class ProductServiceImpl implements ProductService {
                 .orElseThrow(() ->new ProductNotFoundException("Product not found with id: " + id));
         return productMapper.toResponse(product);
     }
-
-    
     
 //    @Override
 //    public Page<ProductResponse> getAllProducts(Pageable pageable) {
@@ -87,6 +86,7 @@ public class ProductServiceImpl implements ProductService {
     
     
     @Override
+    @Transactional
     public ProductResponse updateProduct(Long id, ProductRequest request) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() ->new ProductNotFoundException("Product not found with id: " + id));

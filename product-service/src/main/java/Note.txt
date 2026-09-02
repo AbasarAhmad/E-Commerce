@@ -31,3 +31,25 @@ What is CriteriaBuilder?
 
 What is Predicate?
 -> A Predicate represents a condition.
+
+
+@Transactional
+@Transactional is a Spring annotation used to manage database transactions. It makes multiple database operations work as one unit.
+
+If all operations are successful → Commit (save changes).
+If an error occurs → Rollback (undo changes).
+Transaction flow:
+Begin → Perform Operations → Commit/Rollback → End
+
+ACID Properties
+ACID defines the 4 important properties of a database transaction:
+
+Atomicity – All operations succeed, or none of them happen.
+Consistency – Database remains in a valid and correct state.
+Isolation – One transaction should not interfere with another transaction.
+Durability – Once data is committed, it remains saved even after a failure.
+Example:
+In a money transfer, money is deducted from Account A and added to Account B. If adding money to B fails, the deduction from A is also rolled back.
+
+
+
