@@ -53,3 +53,35 @@ In a money transfer, money is deducted from Account A and added to Account B. If
 
 
 
+
+
+Persistence Context
+A Persistence Context is a temporary working area where JPA/Hibernate manages and tracks entities.
+When an entity is loaded inside a transaction:
+
+Product product = repository.findById(id).get();
+
+Hibernate puts the Product into the Persistence Context and starts tracking it.
+
+If we change it:
+product.setPrice(1000);
+
+we don't need to call save() because Hibernate uses Dirty Checking to detect the change and automatically sends an UPDATE to the database when the transaction commits.
+
+Easy Flow
+Database
+   ↓
+Persistence Context
+   ↓
+Managed Entity
+   ↓
+Change entity
+   ↓
+Dirty Checking
+   ↓
+UPDATE Database
+
+In simple words:
+
+Persistence Context is the place where Hibernate keeps and tracks managed entities so it can automatically detect and save their changes.
+

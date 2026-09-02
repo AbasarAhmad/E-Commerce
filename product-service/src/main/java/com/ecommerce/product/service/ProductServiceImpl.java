@@ -105,18 +105,20 @@ public class ProductServiceImpl implements ProductService {
         product.setQuantity(request.getQuantity());
         product.setCategory(request.getCategory());
         product.setStatus(request.getStatus());
-        Product updatedProduct = productRepository.save(product);
+//        Product updatedProduct = productRepository.save(product);
         
-        ProductAudit audit = ProductAudit.builder()
-                .productId(product.getId())
-                .action("PRODUCT_UPDATED")
-                .createdAt(LocalDateTime.now())
-                .build();
+     //==========for @Transactional
+//        ProductAudit audit = ProductAudit.builder()
+//                .productId(product.getId())
+//                .action("PRODUCT_UPDATED")
+//                .createdAt(LocalDateTime.now())
+//                .build();
+//        productAuditRepository.save(audit);
+//        throw new RuntimeException("Testing transaction rollback");
+        
 
-        productAuditRepository.save(audit);
-        throw new RuntimeException("Testing transaction rollback");
-
-//        return productMapper.toResponse(updatedProduct);s
+//        return productMapper.toResponse(updatedProduct);
+        return productMapper.toResponse(product);
     }
     
     
