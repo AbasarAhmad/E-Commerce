@@ -5,11 +5,15 @@ import com.ecommerce.product.dto.ProductRequest;
 import com.ecommerce.product.dto.ProductResponse;
 import com.ecommerce.product.dto.ProductSearchRequest;
 import com.ecommerce.product.entity.Product;
+import com.ecommerce.product.entity.ProductAudit;
 import com.ecommerce.product.exception.DuplicateSkuException;
 import com.ecommerce.product.exception.ProductNotFoundException;
 import com.ecommerce.product.mapper.ProductMapper;
+import com.ecommerce.product.repository.ProductAuditRepository;
 import com.ecommerce.product.repository.ProductRepository;
 import com.ecommerce.product.specification.ProductSpecification;
+
+import java.time.LocalDateTime;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -22,12 +26,15 @@ public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
     private final ProductMapper productMapper;
+    private final ProductAuditRepository productAuditRepository;
 
     public ProductServiceImpl(
             ProductRepository productRepository,
-            ProductMapper productMapper) {
+            ProductMapper productMapper,
+            ProductAuditRepository productAuditRepository) {
         this.productRepository = productRepository;
         this.productMapper = productMapper;
+        this.productAuditRepository = productAuditRepository;
     }
 
 //    @Override
@@ -99,7 +106,17 @@ public class ProductServiceImpl implements ProductService {
         product.setCategory(request.getCategory());
         product.setStatus(request.getStatus());
         Product updatedProduct = productRepository.save(product);
-        return productMapper.toResponse(updatedProduct);
+        
+        ProductAudit audit = ProductAudit.builder()
+                .productId(product.getId())
+                .action("PRODUCT_UPDATED")
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        productAuditRepository.save(audit);
+        throw new RuntimeException("Testing transaction rollback");
+
+//        return productMapper.toResponse(updatedProduct);s
     }
     
     
