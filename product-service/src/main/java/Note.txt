@@ -85,3 +85,42 @@ In simple words:
 
 Persistence Context is the place where Hibernate keeps and tracks managed entities so it can automatically detect and save their changes.
 
+
+
+
+
+Interviewer: Why can a JPA entity be updated without calling repository.save()?
+Ans : If an entity is loaded inside an active transaction, it becomes managed by the JPA Persistence Context. Hibernate tracks changes to managed entities using dirty checking. When the Persistence Context is flushed, usually around transaction commit, Hibernate generates the required SQL UPDATE automatically. Therefore, explicitly calling save() isn't necessary just to persist changes to that managed entity.
+
+
+
+
+
+flush():
+Flush kya hai?
+flush() Hibernate ko bolta hai: "Persistence Context ke pending changes ko abhi DB ke saath synchronize karo."
+
+Kyo zarurat padti hai?
+Normally Hibernate transaction ke end mein automatically flush karta hai.
+flush() tab use karte hain jab humein SQL ko immediately execute karwana ho ya DB constraint/error ko usi point par check karna ho.
+
+Dirty Checking se kya relation hai?
+Dirty checking identify karta hai ki managed entity mein kya change hua.
+
+Entity change
+    ↓
+Dirty Checking → change detect
+    ↓
+flush() → UPDATE SQL execute
+
+
+
+flush() vs commit()
+
+flush  = SQL DB ko bhejo/execute karo
+commit = transaction ko successfully finalize karo
+
+flush() ke baad bhi agar exception aati hai, transaction rollback ho sakta hai.
+
+One-line interview answer
+Flush means Hibernate ke pending changes ko DB ke saath synchronize karna; dirty checking changes detect karta hai, flush SQL execute karwata hai, aur commit transaction ko final karta hai.

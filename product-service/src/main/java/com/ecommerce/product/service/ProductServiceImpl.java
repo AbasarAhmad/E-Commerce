@@ -12,6 +12,7 @@ import com.ecommerce.product.mapper.ProductMapper;
 import com.ecommerce.product.repository.ProductAuditRepository;
 import com.ecommerce.product.repository.ProductRepository;
 import com.ecommerce.product.specification.ProductSpecification;
+import jakarta.persistence.EntityManager;
 
 import java.time.LocalDateTime;
 
@@ -27,14 +28,17 @@ public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
     private final ProductMapper productMapper;
     private final ProductAuditRepository productAuditRepository;
+    private final EntityManager entityManager;
 
     public ProductServiceImpl(
             ProductRepository productRepository,
             ProductMapper productMapper,
-            ProductAuditRepository productAuditRepository) {
+            ProductAuditRepository productAuditRepository,
+            EntityManager entityManager) {
         this.productRepository = productRepository;
         this.productMapper = productMapper;
         this.productAuditRepository = productAuditRepository;
+        this.entityManager = entityManager;
     }
 
 //    @Override
@@ -118,6 +122,11 @@ public class ProductServiceImpl implements ProductService {
         
 
 //        return productMapper.toResponse(updatedProduct);
+        System.out.println("Before flush");
+
+        entityManager.flush();
+
+        System.out.println("After flush");
         return productMapper.toResponse(product);
     }
     
