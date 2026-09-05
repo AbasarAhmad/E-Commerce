@@ -127,7 +127,8 @@ public class ProductServiceImpl implements ProductService {
         entityManager.flush();
 
         System.out.println("After flush");
-        return productMapper.toResponse(product);
+        throw new RuntimeException("Testing flush and rollback");
+//        return productMapper.toResponse(product);
     }
     
     
