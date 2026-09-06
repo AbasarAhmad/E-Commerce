@@ -1,5 +1,6 @@
 package com.ecommerce.product.service;
 
+import com.ecommerce.product.annotation.LogExecutionTime;
 import com.ecommerce.product.dto.ProductPageResponse;
 import com.ecommerce.product.dto.ProductRequest;
 import com.ecommerce.product.dto.ProductResponse;
@@ -51,7 +52,7 @@ public class ProductServiceImpl implements ProductService {
 //        return productMapper.toResponse(savedProduct);
 //    }
 
-    
+    @LogExecutionTime
     @Override
     public ProductResponse createProduct(ProductRequest request) {
     	 log.info("Creating product with SKU: {}", request.getSku());
@@ -67,6 +68,7 @@ public class ProductServiceImpl implements ProductService {
         return productMapper.toResponse(savedProduct);
     }
     
+    @LogExecutionTime
     @Override
     public ProductResponse getProductById(Long id) {
     	log.info("Fetching product with ID: {}", id);
@@ -80,7 +82,7 @@ public class ProductServiceImpl implements ProductService {
 //        return productRepository.findAll(pageable)
 //                .map(productMapper::toResponse);
 //    }
-    
+    @LogExecutionTime
     @Override
     public ProductPageResponse getAllProducts(Pageable pageable) {
 
@@ -103,7 +105,7 @@ public class ProductServiceImpl implements ProductService {
     }
     
     
-    
+    @LogExecutionTime
     @Override
     @Transactional
     public ProductResponse updateProduct(Long id, ProductRequest request) {
@@ -145,7 +147,7 @@ public class ProductServiceImpl implements ProductService {
     }
     
     
-    
+    @LogExecutionTime
     @Override
     public void deleteProduct(Long id) {
     	log.info("Deleting product with ID: {}", id);
@@ -159,7 +161,7 @@ public class ProductServiceImpl implements ProductService {
     }
     
     
-    
+    @LogExecutionTime
     @Override
     public Page<ProductResponse> searchProducts(String name,Pageable pageable) {
 
@@ -184,7 +186,7 @@ public class ProductServiceImpl implements ProductService {
 //                .findAll(specification, pageable)
 //                .map(productMapper::toResponse);
 //    }
-    
+    @LogExecutionTime
     @Override
     public ProductPageResponse searchProducts(ProductSearchRequest searchRequest,Pageable pageable) {
         Specification<Product> specification =

@@ -166,3 +166,80 @@ private static final Logger log =
 log.info("Product created successfully: {}", product.getId());
 log.error("Product not found: {}", id);
 
+
+
+
+
+AOP — Aspect-Oriented Programming
+AOP is a programming technique used to separate common functionality from the main business logic.
+
+These common functionalities are called cross-cutting concerns.
+
+Examples
+Logging
+Security
+Transaction management
+Performance monitoring
+Exception handling
+Simple idea
+Business Logic
+     +
+   AOP
+     ↓
+Logging / Security / Transactions / Monitoring
+
+Instead of writing logging code inside every method:
+
+createProduct() {
+    // logging
+    // business logic
+    // logging
+}
+
+AOP allows us to keep logging separately in an Aspect and apply it where needed.
+
+Key Terms
+Aspect → Contains the common functionality.
+Advice → Defines what code should run and when.
+Pointcut → Defines which methods should be intercepted.
+Join Point → A point where the Aspect can be applied, such as a method execution.
+@Around → Runs code before and after the target method.
+
+Why use AOP?
+AOP keeps business logic clean by moving common concerns like logging and security into separate components.
+What is an Aspect?
+An Aspect contains common functionality that we want to apply to multiple methods.
+
+Example: logging execution time, security, transactions.
+
+What is a Pointcut?
+A Pointcut tells Spring which methods should be intercepted by the Aspect.
+
+What is @Around Advice?
+@Around runs code before and after a method.
+
+It uses ProceedingJoinPoint.proceed() to execute the actual method.
+
+@Around
+   ↓
+Before method
+   ↓
+proceed()
+   ↓
+Actual method
+   ↓
+After method
+
+@LogExecutionTime
+A custom annotation used to mark only the methods where we want to measure execution time.
+
+@LogExecutionTime
+public Product createProduct(...) {
+    ...
+}
+
+When the Aspect uses:
+
+@Around("@annotation(LogExecutionTime)")
+
+only methods with @LogExecutionTime are intercepted.
