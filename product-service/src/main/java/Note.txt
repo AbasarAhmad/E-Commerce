@@ -243,3 +243,20 @@ When the Aspect uses:
 @Around("@annotation(LogExecutionTime)")
 
 only methods with @LogExecutionTime are intercepted.
+
+
+                 Product Service
+                       │
+                       ▼
+              ┌─────────────────┐
+              │      AOP        │
+              │                 │
+              │ @Around         │
+              │ execution time  │
+              │                 │
+              │ @AfterThrowing  │
+              │ exception log   │
+              └─────────────────┘
+                       │
+                       ▼
+                 Business Logic
