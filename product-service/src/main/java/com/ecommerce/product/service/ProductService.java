@@ -19,4 +19,5 @@ public interface ProductService {
 	 Page<ProductResponse> searchProducts(String name,Pageable pageable);
 //	 Page<ProductResponse> searchProducts(ProductSearchRequest searchRequest,Pageable pageable);
 	 ProductPageResponse searchProducts(ProductSearchRequest searchRequest,Pageable pageable);
+	 void testEntityLifecycle(Long id);
 }

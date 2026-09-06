@@ -119,16 +119,16 @@ public class ProductServiceImpl implements ProductService {
 //                .build();
 //        productAuditRepository.save(audit);
 //        throw new RuntimeException("Testing transaction rollback");
-        
-
+//        
+//
 //        return productMapper.toResponse(updatedProduct);
-        System.out.println("Before flush");
-
-        entityManager.flush();
-
-        System.out.println("After flush");
-        throw new RuntimeException("Testing flush and rollback");
-//        return productMapper.toResponse(product);
+//        System.out.println("Before flush");
+//
+//        entityManager.flush();
+//
+//        System.out.println("After flush");
+//        throw new RuntimeException("Testing flush and rollback");
+        return productMapper.toResponse(product);
     }
     
     
@@ -193,5 +193,18 @@ public class ProductServiceImpl implements ProductService {
                 .first(productPage.isFirst())
                 .last(productPage.isLast())
                 .build();
+    }
+    
+    
+    @Transactional
+    public void testEntityLifecycle(Long id) {
+        Product product = productRepository.findById(id).orElseThrow(() ->new ProductNotFoundException("Product not found with id: " + id));
+        System.out.println("Product loaded");
+        entityManager.detach(product);
+        System.out.println("Product detached");
+        product.setName("DETACHED_TEST");
+        System.out.println("Product name changed");
+        entityManager.flush();
+        System.out.println("Flush completed");
     }
 }

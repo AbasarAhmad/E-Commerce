@@ -124,3 +124,11 @@ flush() ke baad bhi agar exception aati hai, transaction rollback ho sakta hai.
 
 One-line interview answer
 Flush means Hibernate ke pending changes ko DB ke saath synchronize karna; dirty checking changes detect karta hai, flush SQL execute karwata hai, aur commit transaction ko final karta hai.
+
+
+
+
+Transient → New Java object, not tracked by Hibernate.
+Managed → Entity is attached to Persistence Context; Hibernate tracks changes using Dirty Checking.
+Detached → Entity was managed but is no longer tracked; changes are not automatically saved.
+Removed → Entity is marked for deletion; Hibernate executes DELETE during flush/commit.

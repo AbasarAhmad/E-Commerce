@@ -90,4 +90,10 @@ public class ProductController {
     public ProductPageResponse searchProducts(ProductSearchRequest searchRequest,Pageable pageable) {
         return productService.searchProducts(searchRequest,pageable);
     }
+    
+    @GetMapping("/test-lifecycle/{id}")
+    public String testLifecycle(@PathVariable Long id) {
+        productService.testEntityLifecycle(id);
+        return "Lifecycle test completed";
+    }
 }
