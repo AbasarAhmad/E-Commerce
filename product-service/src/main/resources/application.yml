@@ -14,3 +14,9 @@ spring:
     properties:
       hibernate:
         format_sql: true
+logging:
+  level:
+    root: INFO
+    com.ecommerce.product: INFO
+#  file:
+#    name: logs/product-service.log

@@ -21,6 +21,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class ProductServiceImpl implements ProductService {
@@ -29,6 +31,7 @@ public class ProductServiceImpl implements ProductService {
     private final ProductMapper productMapper;
     private final ProductAuditRepository productAuditRepository;
     private final EntityManager entityManager;
+    private static final Logger log = LoggerFactory.getLogger(ProductServiceImpl.class);
 
     public ProductServiceImpl(
             ProductRepository productRepository,
@@ -51,17 +54,22 @@ public class ProductServiceImpl implements ProductService {
     
     @Override
     public ProductResponse createProduct(ProductRequest request) {
+    	 log.info("Creating product with SKU: {}", request.getSku());
+    	 log.debug("Create product request received. SKU: {}, Category: {}",request.getSku(), request.getCategory());
         if (productRepository.existsBySku(request.getSku())) {
+        	log.warn("Duplicate SKU detected: {}", request.getSku());
             throw new DuplicateSkuException("Product with SKU '" + request.getSku() + "' already exists");
         }
         Product product = productMapper.toEntity(request);
         Product savedProduct = productRepository.save(product);
 
+        log.info("Product created successfully. Product ID: {}",savedProduct.getId());
         return productMapper.toResponse(savedProduct);
     }
     
     @Override
     public ProductResponse getProductById(Long id) {
+    	log.info("Fetching product with ID: {}", id);
         Product product = productRepository.findById(id)
                 .orElseThrow(() ->new ProductNotFoundException("Product not found with id: " + id));
         return productMapper.toResponse(product);
@@ -99,8 +107,12 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public ProductResponse updateProduct(Long id, ProductRequest request) {
+    	 log.info("Updating product with ID: {}", id);
         Product product = productRepository.findById(id)
-                .orElseThrow(() ->new ProductNotFoundException("Product not found with id: " + id));
+                .orElseThrow(() -> {
+                	 log.warn("Product not found for update. ID: {}", id);
+               return new ProductNotFoundException("Product not found with id: " + id);
+                });
         
         product.setName(request.getName());
         product.setDescription(request.getDescription());
@@ -128,6 +140,7 @@ public class ProductServiceImpl implements ProductService {
 //
 //        System.out.println("After flush");
 //        throw new RuntimeException("Testing flush and rollback");
+        log.info("Product updated successfully. ID: {}", id);
         return productMapper.toResponse(product);
     }
     
@@ -135,8 +148,13 @@ public class ProductServiceImpl implements ProductService {
     
     @Override
     public void deleteProduct(Long id) {
+    	log.info("Deleting product with ID: {}", id);
         Product product = productRepository.findById(id)
-                .orElseThrow(() ->new ProductNotFoundException("Product not found with id: " + id));
+                .orElseThrow(() -> {
+                	log.warn("Product not found for deletion. ID: {}", id);
+
+                    return new ProductNotFoundException("Product not found with id: " + id);
+                });
         productRepository.delete(product);
     }
     

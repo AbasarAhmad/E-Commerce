@@ -131,4 +131,38 @@ Flush means Hibernate ke pending changes ko DB ke saath synchronize karna; dirty
 Transient → New Java object, not tracked by Hibernate.
 Managed → Entity is attached to Persistence Context; Hibernate tracks changes using Dirty Checking.
 Detached → Entity was managed but is no longer tracked; changes are not automatically saved.
-Removed → Entity is marked for deletion; Hibernate executes DELETE during flush/commit.
+Removed → Entity is marked for deletion; Hibernate executes DELETE during flush/commit.	
+
+
+
+
+| Concept             | What you've practically verified                   |
+| ------------------- | -------------------------------------------------- |
+| Persistence Context | Hibernate tracks managed entities                  |
+| Managed Entity      | Changes are automatically detected                 |
+| Dirty Checking      | Changed fields generate `UPDATE`                   |
+| `save()`            | Not required for an already-managed entity         |
+| `flush()`           | Synchronizes changes with DB                       |
+| `commit()`          | Completes the transaction                          |
+| Rollback            | Undoes flushed changes when transaction rolls back |
+| Detached            | Changes are no longer automatically tracked        |
+
+
+
+
+SLF4J Logger
+SLF4J (Simple Logging Facade for Java) provides a standard way to write application logs instead of using System.out.println().
+
+Why do we use it?
+Helps track application execution and errors.
+Supports different log levels: DEBUG, INFO, WARN, ERROR.
+Logs can be written to console or log files.
+Makes production debugging and monitoring easier.
+
+
+private static final Logger log =
+        LoggerFactory.getLogger(ProductServiceImpl.class);
+
+log.info("Product created successfully: {}", product.getId());
+log.error("Product not found: {}", id);
+
