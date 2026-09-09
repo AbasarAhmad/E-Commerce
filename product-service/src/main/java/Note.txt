@@ -260,3 +260,58 @@ only methods with @LogExecutionTime are intercepted.
                        │
                        ▼
                  Business Logic
+                 
+             
+             
+             
+                 
+                 
+                 
+JUnit
+JUnit is a Java testing framework used to write and run automated tests.
+
+It helps us check whether our code behaves as expected.
+
+Example:
+
+@Test
+void shouldAddTwoNumbers() {
+    assertEquals(5, calculator.add(2, 3));
+}
+
+If the result is 5, the test passes ✅.
+
+Mockito
+Mockito is a Java framework used to create mock objects for testing.
+
+It allows us to test one class without depending on real databases, repositories, APIs, etc.
+
+For example, when testing ProductService, instead of using the real ProductRepository:
+
+ProductService
+      ↓
+   Mockito Mock
+      ↓
+ProductRepository
+
+We can tell Mockito:
+
+when(productRepository.findById(1L))
+        .thenReturn(Optional.of(product));
+
+Now the test doesn't need a real database.
+
+JUnit + Mockito
+They are commonly used together:
+
+JUnit
+  ↓
+Runs the test + checks result
+
+Mockito
+  ↓
+Creates fake dependencies
+
+Easy way to remember
+JUnit = Tests the code
+Mockito = Mocks the dependencies
