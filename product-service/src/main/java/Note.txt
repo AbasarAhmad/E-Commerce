@@ -314,4 +314,13 @@ Creates fake dependencies
 
 Easy way to remember
 JUnit = Tests the code
+
+
+
+
+What is the difference between @SpringBootTest and Mockito unit testing?
+Answer:
+@SpringBootTest loads the Spring application context and allows us to test multiple real application layers together, 
+such as Controller, Service, Repository and JPA. Mockito unit tests isolate a single class by mocking its dependencies 
+and are therefore faster.
 Mockito = Mocks the dependencies
