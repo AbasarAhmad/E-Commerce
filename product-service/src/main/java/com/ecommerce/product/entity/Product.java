@@ -31,6 +31,8 @@ public class Product {
 
     @Column(nullable = false, unique = true)
     private String sku;
+    
+    private String brand;
 
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal price;

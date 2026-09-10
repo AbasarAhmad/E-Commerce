@@ -324,3 +324,153 @@ Answer:
 such as Controller, Service, Repository and JPA. Mockito unit tests isolate a single class by mocking its dependencies 
 and are therefore faster.
 Mockito = Mocks the dependencies
+
+
+
+
+
+
+
+
+Flyway — Quick Notes
+1. What is Flyway?
+Flyway is a database migration/version-control tool.
+It manages changes to the database schema in a controlled and ordered way.
+
+Think:
+Git → version control for code
+Flyway → version control for database changes
+
+
+2. Why do we use Flyway?
+
+Without Flyway, developers may manually run SQL:
+
+CREATE TABLE products (...);
+ALTER TABLE products ADD COLUMN brand ...;
+
+This becomes difficult to track and reproduce.
+
+With Flyway, we keep SQL files in the project:
+
+db/migration/
+├── V1__create_products_table.sql
+├── V2__create_product_audits_table.sql
+└── V3__add_brand_to_products.sql
+
+Now database changes are:
+
+versioned
+ordered
+tracked
+repeatable across environments
+
+
+3. How does Flyway work?
+
+When the application starts:
+
+Spring Boot
+    ↓
+Flyway connects to MySQL
+    ↓
+Checks flyway_schema_history
+    ↓
+Finds pending migrations
+    ↓
+Runs V1 → V2 → V3...
+    ↓
+Records them in flyway_schema_history
+
+Example:
+
+V1 ✓
+V2 ✓
+V3 pending
+
+Flyway runs only V3.
+
+
+4. Why don't we let Hibernate create the DB?
+
+We use:
+
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+validate means:
+
+Hibernate does NOT create or modify tables. It only checks whether the database matches the entities.
+
+So responsibilities are:
+
+Flyway
+  ↓
+Creates/changes database tables
+
+Hibernate
+  ↓
+Maps Java entities ↔ database
+  ↓
+Validates database structure
+
+This gives us clear separation of responsibility.
+
+
+
+5. After Flyway, why does Hibernate give an error if a table is deleted?
+
+Suppose Flyway created:
+
+products
+product_audits
+
+and flyway_schema_history says:
+
+V1 ✓
+V2 ✓
+
+Then someone manually deletes:
+
+DROP TABLE product_audits;
+
+Flyway sees:
+
+V2 ✓
+
+and thinks:
+
+"V2 was already successfully executed, so I don't need to run V2 again."
+
+Therefore Flyway doesn't recreate the table.
+
+Then Hibernate starts validation:
+
+ProductAudit entity
+       ↓
+@Table(name = "product_audits")
+       ↓
+Does product_audits exist?
+       ↓
+NO ❌
+       ↓
+Schema validation error
+
+That's why you got:
+
+Schema validation: missing table [product_audits]
+Important rule
+
+Don't manually delete or modify tables that Flyway manages.
+
+If the schema needs to change, create a new migration:
+
+V3__change_product_audits.sql
+
+rather than manually changing the database.
+
+In one line:
+
+Flyway manages database changes; Hibernate validates that the database matches your Java entities.

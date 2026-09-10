@@ -101,6 +101,16 @@
  		   <artifactId>h2</artifactId>
  		   <scope>test</scope>
 		</dependency>
+		<!-- Core Flyway library for database schema migrations and version management -->
+<!-- Flyway database migrations -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-flyway</artifactId>
+</dependency>
+<dependency>
+    <groupId>org.flywaydb</groupId>
+    <artifactId>flyway-mysql</artifactId>
+</dependency>
 	</dependencies>
 
 	<build>
