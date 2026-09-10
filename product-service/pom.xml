@@ -118,6 +118,12 @@
     <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
     <version>3.0.0</version>
 </dependency>
+
+<!-- Spring Security: provides authentication and authorization for securing APIs -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-security</artifactId>
+</dependency>
 	</dependencies>
 
 	<build>
