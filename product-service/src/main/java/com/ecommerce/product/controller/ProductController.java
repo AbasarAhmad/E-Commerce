@@ -6,6 +6,7 @@ import com.ecommerce.product.dto.ProductResponse;
 import com.ecommerce.product.dto.ProductSearchRequest;
 import com.ecommerce.product.service.ProductService;
 
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 
 import org.springframework.data.domain.Page;
@@ -25,13 +26,15 @@ public class ProductController {
     }
     
 
+    @Operation(summary = "Create a new product",
+    	    description = "Creates a new product after validating the request and checking SKU uniqueness")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ProductResponse createProduct(@Valid @RequestBody ProductRequest request) {
         return productService.createProduct(request);
     }
     
-    
+    @Operation(summary = "Get product by ID",description = "Returns a product using its unique ID")
     @GetMapping("/{id}")
     public ProductResponse getProductById(@PathVariable Long id) {
 
@@ -46,20 +49,21 @@ public class ProductController {
 //        return productService.getAllProducts(pageable);
 //    }
 //    
-    
+    @Operation( summary = "Get all products", description = "Returns products using pagination and sorting")
     @GetMapping
     public ProductPageResponse getAllProducts(Pageable pageable) {
 
         return productService.getAllProducts(pageable);
     }
     
+    @Operation(summary = "Update product",description = "Updates an existing product using its ID")
     @PutMapping("/{id}")
     public ProductResponse updateProduct(@PathVariable Long id,@Valid @RequestBody ProductRequest request) {
         return productService.updateProduct(id, request);
     }
     
     
-    
+    @Operation(summary = "Delete product",description = "Deletes an existing product using its ID")
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteProduct(@PathVariable Long id) {
@@ -70,6 +74,7 @@ public class ProductController {
 //    http://localhost:8081/api/v1/products/search?name=iphone   =======>  For Search
 //    http://localhost:8081/api/v1/products/search?name=iphone&page=0&size=2  ======>  For pagination
 //    http://localhost:8081/api/v1/products/search?name=iphone&page=0&size=5&sort=price,desc    ===> for Sorting
+   
     @GetMapping("/search")
     public Page<ProductResponse> searchProducts(@RequestParam String name,Pageable pageable) {
         return productService.searchProducts(name, pageable);
@@ -85,7 +90,8 @@ public class ProductController {
 //        return productService.searchProducts(searchRequest,pageable);
 //    }
     
-    
+    @Operation(summary = "Search products",
+    	    description = "Searches products using optional filters such as name, category, status and price range")
     @GetMapping("/advance/search")
     public ProductPageResponse searchProducts(ProductSearchRequest searchRequest,Pageable pageable) {
         return productService.searchProducts(searchRequest,pageable);

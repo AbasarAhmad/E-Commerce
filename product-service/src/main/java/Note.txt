@@ -474,3 +474,16 @@ rather than manually changing the database.
 In one line:
 
 Flyway manages database changes; Hibernate validates that the database matches your Java entities.
+
+
+
+
+
+
+What is OpenAPI/Swagger used for?
+
+OpenAPI is a specification for describing REST APIs, while Swagger UI provides an interactive interface 
+for viewing and testing those APIs. In Spring Boot, Springdoc can generate the OpenAPI documentation 
+automatically from controller mappings and annotations.
+
+http://localhost:8081/swagger-ui.html

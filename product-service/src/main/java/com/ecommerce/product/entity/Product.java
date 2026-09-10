@@ -9,7 +9,9 @@ import java.time.LocalDateTime;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
+@Tag(name = "Product APIs",description = "APIs for managing products")
 @Entity
 @EntityListeners(AuditingEntityListener.class) //tells Spring to automatically track changes in an entity, such as when it was created or last updated
 @Table(name = "products")
