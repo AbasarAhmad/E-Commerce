@@ -21,6 +21,7 @@ logging:
   level:
     root: INFO
     com.ecommerce.product: INFO
+    org.springframework.security: DEBUG
 
 # logging:
 #   file:
