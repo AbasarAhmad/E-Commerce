@@ -487,3 +487,147 @@ for viewing and testing those APIs. In Spring Boot, Springdoc can generate the O
 automatically from controller mappings and annotations.
 
 http://localhost:8081/swagger-ui.html
+
+
+
+
+
+
+
+
+
+
+
+
+JWT Notes
+
+JwtService
+Purpose: Handles JWT creation, reading username/role, and validating token expiry and username.
+
+@Service — Tells Spring to create and manage this class as a service bean.
+SecretKey — Secret key used to sign and verify JWT tokens.
+@Value — Reads JWT configuration values such as secret and expiration from application.properties.
+Keys.hmacShaKeyFor() — Converts the secret string into a secure HMAC key.
+generateToken() — Creates a JWT containing username, role, issue time, and expiration time.
+subject(username) — Stores the username inside the JWT.
+claim("role", role) — Stores the user's role inside the JWT.
+issuedAt(now) — Stores when the JWT was created.
+expiration(expiration) — Stores when the JWT will expire.
+signWith(secretKey) — Signs the JWT so the server can verify that it was not modified.
+extractUsername() — Reads the username from the JWT.
+extractRole() — Reads the role from the JWT.
+isTokenValid() — Checks whether the username matches and the token has not expired.
+isTokenExpired() — Checks whether the JWT expiration time has passed.
+
+
+JwtAuthenticationFilter
+Purpose: Runs for incoming requests, reads the JWT, validates it, extracts the user/role, and puts authentication into Spring Security.
+
+@Component — Tells Spring to create and manage this filter as a bean.
+OncePerRequestFilter — Ensures the filter runs once for each HTTP request.
+doFilterInternal() — Contains the logic executed for each incoming request.
+Authorization header — Contains the JWT sent by the client.
+Bearer — Indicates that the value in the Authorization header is a Bearer token.
+extractUsername() — Gets the username from the JWT.
+extractRole() — Gets the role from the JWT.
+loadUserByUsername() — Loads the user from the database.
+isTokenValid() — Checks whether the JWT is valid for the user.
+SimpleGrantedAuthority — Converts the JWT role into a Spring Security authority such as ROLE_ADMIN.
+UsernamePasswordAuthenticationToken — Represents the authenticated user inside Spring Security.
+SecurityContextHolder — Stores the authenticated user for the current request.
+filterChain.doFilter() — Passes the request to the next filter/controller.
+
+
+Important flow
+Request
+   ↓
+Authorization: Bearer JWT
+   ↓
+Extract username + role
+   ↓
+Load user from DB
+   ↓
+Validate JWT
+   ↓
+ROLE_ADMIN / ROLE_USER
+   ↓
+SecurityContext
+   ↓
+Controller
+
+
+SecurityConfig
+
+Purpose: Configures Spring Security rules, JWT authentication, sessions, password encoding, and authentication manager.
+
+@Configuration — Tells Spring that this class contains configuration/bean definitions.
+@EnableMethodSecurity — Enables annotations like @PreAuthorize for method-level authorization.
+@Bean — Tells Spring to create and manage the returned object as a Spring bean.
+SecurityFilterChain — Defines how incoming HTTP requests should be secured.
+csrf.disable() — Disables CSRF protection for this API configuration.
+SessionCreationPolicy.STATELESS — Tells Spring Security not to store authentication in HTTP sessions.
+permitAll() — Allows the specified endpoints without authentication.
+hasRole("ADMIN") — Allows access only to users with the ADMIN role.
+authenticated() — Requires the user to be authenticated.
+addFilterBefore() — Adds the JWT filter before Spring Security's username/password authentication filter.
+AuthenticationManager — Performs username/password authentication during login.
+AuthenticationConfiguration — Provides Spring Security's configured AuthenticationManager.
+BCryptPasswordEncoder — Hashes and verifies passwords using BCrypt.
+
+
+Security flow
+Login
+ ↓
+AuthenticationManager
+ ↓
+Database user
+ ↓
+Password verification
+ ↓
+JWT generated
+
+Other API request
+ ↓
+JwtAuthenticationFilter
+ ↓
+JWT validation
+ ↓
+SecurityContext
+ ↓
+Authorization rules
+
+
+AuthController
+
+Purpose: Handles login requests, authenticates the user, gets the role, and generates a JWT.
+
+@RestController — Marks the class as a REST API controller.
+@RequestMapping("/api/v1/auth") — Sets the base URL for authentication APIs.
+@PostMapping("/login") — Maps POST /api/v1/auth/login to the login method.
+@ResponseStatus(HttpStatus.OK) — Returns HTTP 200 OK when login succeeds.
+@Valid — Triggers validation rules defined on the request DTO.
+@RequestBody — Converts the JSON request body into the Java object.
+AuthenticationManager.authenticate() — Verifies the submitted username and password.
+UsernamePasswordAuthenticationToken — Carries the username/password to the authentication process.
+getAuthorities() — Gets the authenticated user's roles/authorities.
+jwtService.generateToken() — Creates the JWT after successful authentication.
+Login flow
+POST /api/v1/auth/login
+        ↓
+username + password
+        ↓
+AuthenticationManager
+        ↓
+CustomUserDetailsService
+        ↓
+MySQL users table
+        ↓
+Password verification
+        ↓
+Authentication successful
+        ↓
+Get role
+        ↓
+Generate JWT
+        ↓
+Return JWT
