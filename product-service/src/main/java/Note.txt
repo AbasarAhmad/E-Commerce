@@ -631,3 +631,54 @@ Get role
 Generate JWT
         ↓
 Return JWT
+
+
+
+
+
+
+
+Refresh Token
+
+Definition:
+A Refresh Token is a long-lived token used to generate a new Access Token when the current Access Token expires, without requiring the user to log in again.
+
+Why do we use it?
+Access Token is short-lived
+Example: Access Token expires in 15 minutes.
+Refresh Token is long-lived
+Example: Refresh Token is valid for 7 days.
+Avoid repeated login
+When the Access Token expires, the client sends the Refresh Token to /refresh and gets a new Access Token.
+Improves security
+Keeping the Access Token short-lived reduces the damage if it is stolen.
+
+
+Login
+  ↓
+Access Token (15 min)
+Refresh Token (7 days)
+  ↓
+Access Token expires
+  ↓
+Send Refresh Token → /refresh
+  ↓
+New Access Token
+  ↓
+Continue using APIs
+Important
+
+Refresh Token is NOT normally used to access protected APIs.
+
+Access Token  → Access protected APIs
+Refresh Token → Generate new Access Token
+Advantages
+Better security with short-lived Access Tokens
+User doesn't need to log in repeatedly
+Supports long-lived login sessions
+Refresh Tokens can be stored/revoked on the server
+Disadvantages
+Adds implementation complexity
+Refresh Token is itself sensitive
+If stolen, it can potentially be used to obtain new Access Tokens until it expires/revoked
+Requires additional token-management logic

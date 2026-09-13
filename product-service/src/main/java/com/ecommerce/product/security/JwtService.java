@@ -104,7 +104,7 @@ public class JwtService {
     
     public String extractRole(String token) {
 
-        log.debug("Extracting role from JWT token");
+        log.info("Extracting role from JWT token");
 
         String role = Jwts.parser()
                 .verifyWith(secretKey)
@@ -113,7 +113,7 @@ public class JwtService {
                 .getPayload()
                 .get("role", String.class);
 
-        log.debug("Role extracted successfully from JWT: {}", role);
+        log.info("Role extracted successfully from JWT: {}", role);
 
         return role;
     }

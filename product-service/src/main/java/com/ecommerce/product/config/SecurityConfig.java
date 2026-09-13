@@ -48,7 +48,8 @@ public class SecurityConfig {
                 .requestMatchers(
                     "/swagger-ui/**",
                     "/v3/api-docs/**",
-                    "/api/v1/auth/login").permitAll()
+                    "/api/v1/auth/login",
+                    "/api/v1/auth/refresh").permitAll()
 
                 .requestMatchers(HttpMethod.DELETE,
                     "/api/v1/products/**").hasRole("ADMIN")
