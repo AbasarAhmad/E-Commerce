@@ -69,4 +69,16 @@ public class RefreshTokenService {
 
         return refreshTokenRepository.save(newToken);
     }
+    
+    @Transactional
+    public void revokeToken(String token) {
+
+        RefreshToken refreshToken =
+                refreshTokenRepository.findByToken(token)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Refresh token not found"));
+
+        refreshTokenRepository.delete(refreshToken);
+    }
 }

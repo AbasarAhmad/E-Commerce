@@ -92,4 +92,14 @@ public class AuthController {
 
         return new AuthResponse(accessToken,newRefreshToken.getToken());
     }
+    
+    
+    @PostMapping("/logout")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void logout(
+            @Valid @RequestBody RefreshTokenRequest request) {
+
+        refreshTokenService.revokeToken(
+                request.getRefreshToken());
+    }
 }
