@@ -62,25 +62,6 @@ public class JwtService {
         return username;
     }
 
-    public boolean isTokenValid(String token, UserDetails userDetails) {
-
-        String username = extractUsername(token);
-
-        boolean usernameMatches = username.equals(userDetails.getUsername());
-        boolean tokenExpired = isTokenExpired(token);
-
-        boolean valid = usernameMatches && !tokenExpired;
-
-        if (valid) {
-            log.info("JWT token is valid for username: {}", username);
-        } else {
-            log.warn("JWT token validation failed for username: {}. Username matches: {}, Token expired: {}",
-                    username,usernameMatches,tokenExpired);
-        }
-
-        return valid;
-    }
-
     private boolean isTokenExpired(String token) {
 
         Date expiration = Jwts.parser()
@@ -116,6 +97,22 @@ public class JwtService {
         log.info("Role extracted successfully from JWT: {}", role);
 
         return role;
+    }
+    
+    
+    public boolean isTokenValid(String token) {
+
+        try {
+            Jwts.parser()
+                    .verifyWith(secretKey)
+                    .build()
+                    .parseSignedClaims(token);
+
+            return true;
+
+        } catch (Exception exception) {
+            return false;
+        }
     }
 }
 

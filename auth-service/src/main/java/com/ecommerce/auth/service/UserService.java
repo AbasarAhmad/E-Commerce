@@ -22,18 +22,18 @@ public class UserService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public User registerUser(String username, String password) {
+    public User registerUser(String username, String password, String role) {
 
         if (userRepository.existsByUsername(username)) {
             log.info("Registration failed. Username already exists: {}", username);
-            
+          
             throw new DuplicateUsernameException("Username already exists: " + username);
         }
 
         User user = User.builder()
                 .username(username)
                 .password(passwordEncoder.encode(password))
-                .role("USER")
+                .role(role)
                 .enabled(true)
                 .build();
 

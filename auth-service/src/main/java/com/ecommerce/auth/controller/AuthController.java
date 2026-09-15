@@ -61,7 +61,7 @@ public class AuthController {
     @Operation(summary = "Register a new user",description = "Creates a new user account with a BCrypt-hashed password")
     @PostMapping("/register")
     public ResponseEntity<String> register(@Valid @RequestBody RegisterRequest request) {
-        User user = userService.registerUser(request.getUsername(),request.getPassword());
+        User user = userService.registerUser(request.getUsername(),request.getPassword(), request.getRole());
         log.info("User registered successfully with id: {}", user.getId());
         
         return ResponseEntity
