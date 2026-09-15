@@ -682,3 +682,80 @@ Adds implementation complexity
 Refresh Token is itself sensitive
 If stolen, it can potentially be used to obtain new Access Tokens until it expires/revoked
 Requires additional token-management logic
+
+
+
+
+
+
+
+
+Why did we create auth-service?
+Earlier, product-service was handling both products and authentication.
+We created auth-service to separate authentication logic from product logic.
+auth-service is responsible for:
+User registration
+Login
+Password hashing
+JWT generation
+Refresh token
+Logout
+User roles
+product-service is responsible only for product-related operations.
+auth-service generates the JWT.
+product-service validates the JWT before allowing protected APIs.
+Simple flow
+User
+ ↓
+auth-service
+ ↓
+Login + JWT generation
+ ↓
+JWT
+ ↓
+product-service
+ ↓
+JWT validation
+ ↓
+Access Product APIs
+
+Main purpose: Keep authentication and business logic separate, making the system easier to maintain and scale.
+
+
+
+
+Why do we need a separate auth-service?
+
+Imagine your E-Commerce application eventually has:
+
+auth-service
+product-service
+order-service
+payment-service
+cart-service
+inventory-service
+notification-service
+
+If every service implements its own authentication:
+
+product-service → User + Login + JWT
+order-service   → User + Login + JWT
+payment-service → User + Login + JWT
+cart-service    → User + Login + JWT
+
+you have duplicated security logic everywhere.
+
+Instead:
+
+                  auth-service
+                      │
+              Authentication
+              Authorization
+              JWT generation
+                      │
+             ┌────────┼────────┐
+             ↓        ↓        ↓
+         product    order    payment
+         service    service   service
+
+Now authentication has one owner.

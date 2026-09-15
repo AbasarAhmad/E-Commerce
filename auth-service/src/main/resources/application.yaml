@@ -1,0 +1,25 @@
+server:
+  port: 8182
+
+spring:
+  application:
+    name: auth-service
+  datasource:
+    url: jdbc:mysql://localhost:3306/ecommerce_auth
+    username: root
+    password: root
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  flyway:
+    baseline-on-migrate: true
+
+jwt:
+  secret: ${JWT_SECRET:my-super-secret-key-for-ecommerce-auth-service-123456}
+  expiration: 3600000
