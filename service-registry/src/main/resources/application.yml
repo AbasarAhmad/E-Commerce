@@ -9,3 +9,10 @@ eureka:
   client:
     register-with-eureka: false
     fetch-registry: false
+
+
+logging:
+   level:
+      com.netflix.eureka: WARN
+      com.netflix.discovery: WARN
+      org.springframework.cloud.netflix.eureka: WARN
