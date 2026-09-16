@@ -23,3 +23,8 @@ spring:
 jwt:
   secret: ${JWT_SECRET:my-super-secret-key-for-ecommerce-auth-service-123456}
   expiration: 3600000
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
