@@ -1,7 +1,6 @@
 package com.ecommerce.gateway.config;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Collection;
 import java.util.List;
 
 import javax.crypto.spec.SecretKeySpec;
@@ -9,12 +8,11 @@ import javax.crypto.spec.SecretKeySpec;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder;
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
@@ -25,115 +23,106 @@ import org.springframework.security.web.server.SecurityWebFilterChain;
 @EnableWebFluxSecurity
 public class SecurityConfig {
 
-    // JWT secret is read from application.yml.
-    // The same secret must be used by Auth Service to generate the JWT.
+    /*
+     * JWT secret is read from application.yml.
+     *
+     * The same secret must be used by Auth Service
+     * to generate/sign the JWT.
+     */
     @Value("${jwt.secret}")
     private String jwtSecret;
 
-
+    /*
+     * JWT Decoder
+     *
+     * Auth Service is currently using HS384,
+     * so Gateway must also use HS384 to validate
+     * the JWT.
+     */
     @Bean
     public ReactiveJwtDecoder jwtDecoder() {
 
-        /*
-         * Convert the JWT secret string into a cryptographic key.
-         *
-         * HmacSHA384 is used because Auth Service signs the JWT
-         * using an HMAC SHA-384 algorithm (HS384).
-         *
-         * The Gateway must use the same algorithm and secret
-         * to successfully validate the JWT.
-         */
-        SecretKeySpec secretKey = new SecretKeySpec(jwtSecret.getBytes(StandardCharsets.UTF_8),"HmacSHA384");
+        SecretKeySpec secretKey = new SecretKeySpec(
+                jwtSecret.getBytes(StandardCharsets.UTF_8),
+                "HmacSHA384"
+        );
 
-        /*
-         * Configure the Gateway to validate incoming JWT tokens.
-         *
-         * withSecretKey() -> uses our shared secret for validation.
-         *
-         * HS384 -> tells Spring that the JWT was signed using
-         * HMAC SHA-384.
-         *
-         * If Auth Service and Gateway use different algorithms,
-         * JWT validation will fail.
-         */
         return NimbusReactiveJwtDecoder
                 .withSecretKey(secretKey)
                 .macAlgorithm(MacAlgorithm.HS384)
                 .build();
     }
 
-
+    /*
+     * Spring Security configuration for API Gateway.
+     */
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(
             ServerHttpSecurity http) {
 
         return http
 
-                // JWT is used for authentication, so CSRF protection
-                // is disabled for this stateless REST API.
+                /*
+                 * JWT-based REST API is stateless,
+                 * so CSRF protection is disabled.
+                 */
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
-
 
                 .authorizeExchange(exchange -> exchange
 
-                        /*
-                         * These authentication APIs are public.
-                         *
-                         * User does not have a JWT before login,
-                         * therefore these endpoints cannot require authentication.
-                         */
+                        // Public authentication APIs
                         .pathMatchers(
                                 "/api/v1/auth/register",
                                 "/api/v1/auth/login",
                                 "/api/v1/auth/refresh"
                         ).permitAll()
 
-
-                        /*
-                         * DELETE product operation is restricted to ADMIN.
-                         *
-                         * hasRole("ADMIN") internally checks for:
-                         * ROLE_ADMIN
-                         *
-                         * The ROLE_ADMIN authority is created below
-                         * from the "role" claim inside the JWT.
-                         */
+                        // Product read operations
                         .pathMatchers(
-                                org.springframework.http.HttpMethod.DELETE,
-                                "/api/v1/products/**").hasRole("ADMIN")
+                                HttpMethod.GET,
+                                "/api/v1/products",
+                                "/api/v1/products/**"
+                        ).hasAnyRole("USER", "ADMIN")
 
+                        // Product write operations
+                        .pathMatchers(
+                                HttpMethod.POST,
+                                "/api/v1/products",
+                                "/api/v1/products/**"
+                        ).hasRole("ADMIN")
 
-                        /*
-                         * Every other API must have a valid JWT.
-                         *
-                         * Example:
-                         * GET /api/v1/products
-                         * PUT /api/v1/products/1
-                         *
-                         * These requests require authentication.
-                         */
+                        .pathMatchers(
+                                HttpMethod.PUT,
+                                "/api/v1/products",
+                                "/api/v1/products/**"
+                        ).hasRole("ADMIN")
+
+                        .pathMatchers(
+                                HttpMethod.DELETE,
+                                "/api/v1/products",
+                                "/api/v1/products/**"
+                        ).hasRole("ADMIN")
+
+                        // Everything else requires authentication
                         .anyExchange().authenticated()
-
                 )
 
-
                 /*
-                 * Enable OAuth2 Resource Server JWT authentication.
+                 * Enable JWT authentication.
                  *
-                 * Gateway extracts the Bearer token from:
+                 * Gateway extracts:
                  *
                  * Authorization: Bearer <JWT>
                  *
-                 * Then the JWT decoder validates the token.
+                 * Then validates the JWT and extracts
+                 * the user's role.
                  */
-                .oauth2ResourceServer(oauth2 -> oauth2
-
-                        .jwt(jwt -> jwt
-
-                                // Convert JWT claims into Spring Security
-                                // authorities such as ROLE_ADMIN or ROLE_USER.
-                                .jwtAuthenticationConverter(
-                                        jwtAuthenticationConverter()
+                .oauth2ResourceServer(oauth2 ->
+                        oauth2.jwt(jwt ->
+                                jwt.jwtAuthenticationConverter(
+                                        new ReactiveJwtAuthenticationConverterAdapter(
+                                                jwtAuthenticationConverter()
+                                        )
                                 )
                         )
                 )
@@ -141,80 +130,58 @@ public class SecurityConfig {
                 .build();
     }
 
+    /*
+     * Converts the "role" claim from JWT
+     * into Spring Security authorities.
+     *
+     * Example:
+     *
+     * JWT:
+     * {
+     *     "sub": "riyaz",
+     *     "role": "USER"
+     * }
+     *
+     * becomes:
+     *
+     * ROLE_USER
+     */
+    private JwtAuthenticationConverter jwtAuthenticationConverter() {
 
-    @Bean
-    public ReactiveJwtAuthenticationConverterAdapter jwtAuthenticationConverter() {
+        JwtAuthenticationConverter converter =
+                new JwtAuthenticationConverter();
 
-        /*
-         * JwtAuthenticationConverter converts information
-         * from the JWT into Spring Security authorities.
-         */
-        JwtAuthenticationConverter converter =new JwtAuthenticationConverter();
+        converter.setJwtGrantedAuthoritiesConverter(jwt -> {
 
-        /*
-         * Instead of using Spring's default role mapping,
-         * we use our own method to extract the "role" claim.
-         *
-         * Example JWT:
-         *
-         * {
-         *     "sub": "user",
-         *     "role": "ADMIN"
-         * }
-         */
-        converter.setJwtGrantedAuthoritiesConverter(this::extractAuthorities
-        );
+            /*
+             * Read role from JWT.
+             */
+            String role = jwt.getClaimAsString("role");
 
-        /*
-         * API Gateway uses reactive WebFlux security,
-         * so the normal JwtAuthenticationConverter is wrapped
-         * in a reactive adapter.
-         */
-        return new ReactiveJwtAuthenticationConverterAdapter(converter);
+            /*
+             * If role is missing or empty,
+             * don't grant any authority.
+             */
+            if (role == null || role.isBlank()) {
+                return List.of();
+            }
+
+            /*
+             * Convert:
+             *
+             * USER  -> ROLE_USER
+             * ADMIN -> ROLE_ADMIN
+             *
+             * This allows:
+             *
+             * hasAnyRole("USER", "ADMIN")
+             */
+            return List.of(
+                    new SimpleGrantedAuthority("ROLE_" + role)
+            );
+        });
+
+        return converter;
     }
-
-
-    private Collection<GrantedAuthority> extractAuthorities(Jwt jwt) {
-
-        /*
-         * Read the "role" claim from the JWT.
-         *
-         * Example:
-         *
-         * "role": "ADMIN"
-         *
-         * role = "ADMIN"
-         */
-        String role = jwt.getClaimAsString("role");
-
-
-        /*
-         * If JWT does not contain a role,
-         * don't give the user any authority.
-         *
-         * This prevents missing/invalid roles from
-         * accidentally getting access to role-protected APIs.
-         */
-        if (role == null || role.isBlank()) {
-            return List.of();
-        }
-
-
-        /*
-         * Spring Security expects roles in the format:
-         *
-         * ROLE_ADMIN
-         * ROLE_USER
-         *
-         * Therefore:
-         *
-         * JWT role = ADMIN
-         *          ↓
-         * ROLE_ADMIN
-         *
-         * Then hasRole("ADMIN") can match it.
-         */
-        return List.of(new SimpleGrantedAuthority("ROLE_" + role));
-    }
-
 }
+
