@@ -28,12 +28,20 @@ public class OrderService {
     }
 
     @Transactional
-    public OrderResponse createOrder(Long userId, OrderRequest request) {
+    public OrderResponse createOrder(
+            String username,
+            String authorizationHeader,
+            OrderRequest request) {
+
+        UserResponse userResponse =
+                authServiceClient.getUserByUsername(
+                        username,
+                        authorizationHeader);
 
         LocalDateTime now = LocalDateTime.now();
 
         Order order = Order.builder()
-                .userId(userId)
+                .userId(userResponse.getId())
                 .totalAmount(request.getTotalAmount())
                 .status("CREATED")
                 .createdAt(now)
@@ -43,14 +51,5 @@ public class OrderService {
         Order savedOrder = orderRepository.save(order);
 
         return orderMapper.toResponse(savedOrder);
-    }
-    
-    
-    public UserResponse getUser(String username,String authorizationHeader) {
-
-        return authServiceClient.getUserByUsername(
-                username,
-                authorizationHeader
-        );
     }
 }

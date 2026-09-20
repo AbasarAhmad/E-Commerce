@@ -92,6 +92,24 @@
     <groupId>org.flywaydb</groupId>
     <artifactId>flyway-mysql</artifactId>
 </dependency>
+
+<!-- Enables client-side load balancing for service-to-service communication -->
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-loadbalancer</artifactId>
+</dependency>
+
+<!-- Provides Spring Security for authentication and authorization -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-security</artifactId>
+</dependency>
+
+<!-- Enables JWT-based authentication using OAuth2 Resource Server -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+</dependency>
 	</dependencies>
 	<dependencyManagement>
 		<dependencies>
