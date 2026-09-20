@@ -4,6 +4,7 @@ import com.ecommerce.auth.dto.AuthRequest;
 import com.ecommerce.auth.dto.AuthResponse;
 import com.ecommerce.auth.dto.RefreshTokenRequest;
 import com.ecommerce.auth.dto.RegisterRequest;
+import com.ecommerce.auth.dto.UserResponse;
 import com.ecommerce.auth.entity.RefreshToken;
 import com.ecommerce.auth.entity.User;
 import com.ecommerce.auth.repository.UserRepository;
@@ -121,5 +122,13 @@ public class AuthController {
 
         refreshTokenService.revokeToken(request.getRefreshToken());
         log.info("User logged out successfully");
+    }
+    
+    
+    @GetMapping("/internal/users/{username}")
+    public ResponseEntity<UserResponse> getUserByUsername(@PathVariable String username) {
+
+        return ResponseEntity.ok(userService.getUserByUsername(username)
+        );
     }
 }
