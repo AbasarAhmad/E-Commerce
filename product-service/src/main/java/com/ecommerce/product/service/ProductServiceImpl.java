@@ -1,6 +1,7 @@
 package com.ecommerce.product.service;
 
 import com.ecommerce.product.annotation.LogExecutionTime;
+import com.ecommerce.product.dto.ProductInternalResponse;
 import com.ecommerce.product.dto.ProductPageResponse;
 import com.ecommerce.product.dto.ProductRequest;
 import com.ecommerce.product.dto.ProductResponse;
@@ -227,5 +228,51 @@ public class ProductServiceImpl implements ProductService {
         System.out.println("Product name changed");
         entityManager.flush();
         System.out.println("Flush completed");
+    }
+    
+    
+    
+    public ProductInternalResponse getProductForOrder(Long productId) {
+
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() ->
+                        new ProductNotFoundException(
+                                "Product not found with id: " + productId));
+
+        return new ProductInternalResponse(
+                product.getId(),
+                product.getName(),
+                product.getPrice(),
+                product.getQuantity(),
+                product.getStatus()
+        );
+    }
+    
+    
+    @Transactional
+    public void decreaseQuantity(Long productId, Integer quantityToDecrease) {
+
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() ->new ProductNotFoundException("Product not found with id: " + productId));
+
+        if (product.getQuantity() < quantityToDecrease) {
+        	  throw new RuntimeException(
+                    "Insufficient quantity for product: " + productId);
+        }
+
+        product.setQuantity(product.getQuantity() - quantityToDecrease);
+
+        productRepository.save(product);
+    }
+    
+    
+    @Transactional
+    public void restoreQuantity(Long productId,Integer quantityToRestore) {
+
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() ->new ProductNotFoundException("Product not found with id: " + productId));
+
+        product.setQuantity(product.getQuantity() + quantityToRestore);
+        productRepository.save(product);
     }
 }

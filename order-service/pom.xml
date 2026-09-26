@@ -82,17 +82,17 @@
     <artifactId>mysql-connector-j</artifactId>
     <scope>runtime</scope>
 </dependency>
-
+<!-- Enables Flyway database migration support -->
 <dependency>
-    <groupId>org.flywaydb</groupId>
-    <artifactId>flyway-core</artifactId>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-flyway</artifactId>
 </dependency>
 
+<!-- MySQL support for Flyway -->
 <dependency>
     <groupId>org.flywaydb</groupId>
     <artifactId>flyway-mysql</artifactId>
 </dependency>
-
 <!-- Enables client-side load balancing for service-to-service communication -->
 <dependency>
     <groupId>org.springframework.cloud</groupId>

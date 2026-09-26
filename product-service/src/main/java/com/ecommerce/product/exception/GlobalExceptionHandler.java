@@ -75,4 +75,6 @@ public class GlobalExceptionHandler {
                 .message("An unexpected error occurred")
                 .build();
     }
+    
+    
 }

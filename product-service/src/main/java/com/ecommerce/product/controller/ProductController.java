@@ -4,6 +4,8 @@ import com.ecommerce.product.dto.ProductPageResponse;
 import com.ecommerce.product.dto.ProductRequest;
 import com.ecommerce.product.dto.ProductResponse;
 import com.ecommerce.product.dto.ProductSearchRequest;
+import com.ecommerce.product.dto.RestoreProductQuantityRequest;
+import com.ecommerce.product.dto.UpdateProductQuantityRequest;
 import com.ecommerce.product.service.ProductService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,11 +14,13 @@ import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-
+import com.ecommerce.product.dto.ProductInternalResponse;
+import org.springframework.web.bind.annotation.PathVariable;
 
 @RestController
 @RequestMapping("/api/v1/products")
@@ -106,5 +110,29 @@ public class ProductController {
     public String testLifecycle(@PathVariable Long id) {
         productService.testEntityLifecycle(id);
         return "Lifecycle test completed";
+    }
+    
+    @GetMapping("/internal/{productId}")
+    public ResponseEntity<ProductInternalResponse> getProductForOrder(
+            @PathVariable Long productId) {
+
+        return ResponseEntity.ok(
+                productService.getProductForOrder(productId)
+        );
+    }
+    
+    @PatchMapping("/internal/{productId}/quantity")
+    public ResponseEntity<Void> decreaseProductQuantity(@PathVariable Long productId,@Valid @RequestBody UpdateProductQuantityRequest request) {
+
+        productService.decreaseQuantity( productId,request.getQuantity());
+
+        return ResponseEntity.noContent().build();
+    }
+    
+    @PatchMapping("/internal/{productId}/quantity/restore")
+    public ResponseEntity<Void> restoreProductQuantity(@PathVariable Long productId,@Valid @RequestBody RestoreProductQuantityRequest request) {
+
+        productService.restoreQuantity( productId,request.getQuantity());
+        return ResponseEntity.noContent().build();
     }
 }

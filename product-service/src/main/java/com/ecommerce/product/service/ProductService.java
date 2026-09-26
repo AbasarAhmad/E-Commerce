@@ -1,5 +1,6 @@
 package com.ecommerce.product.service;
 
+import com.ecommerce.product.dto.ProductInternalResponse;
 import com.ecommerce.product.dto.ProductPageResponse;
 import com.ecommerce.product.dto.ProductRequest;
 import com.ecommerce.product.dto.ProductResponse;
@@ -20,4 +21,7 @@ public interface ProductService {
 //	 Page<ProductResponse> searchProducts(ProductSearchRequest searchRequest,Pageable pageable);
 	 ProductPageResponse searchProducts(ProductSearchRequest searchRequest,Pageable pageable);
 	 void testEntityLifecycle(Long id);
+	 ProductInternalResponse getProductForOrder(Long productId);
+	 void decreaseQuantity(Long productId, Integer quantityToDecrease);
+	 void restoreQuantity(Long productId,Integer quantityToRestore);
 }
