@@ -1,5 +1,10 @@
 package com.ecommerce.gateway.filter;
 
+import java.util.UUID;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
@@ -9,44 +14,61 @@ import org.springframework.web.server.ServerWebExchange;
 
 import reactor.core.publisher.Mono;
 
-import java.util.UUID;
-
 @Component
 public class CorrelationIdFilter implements GlobalFilter, Ordered {
 
-    private static final String CORRELATION_ID = "X-Correlation-Id";
+	private static final Logger log = LoggerFactory.getLogger(CorrelationIdFilter.class);
 
-    @Override
-    public Mono<Void> filter(
-            ServerWebExchange exchange,
-            GatewayFilterChain chain) {
+	private static final String CORRELATION_ID = "correlationId";
+	private static final String CORRELATION_ID_HEADER = "X-Correlation-Id";
 
-        String correlationId = exchange.getRequest()
-                .getHeaders()
-                .getFirst(CORRELATION_ID);
+	@Override
+	public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
 
-        if (correlationId == null || correlationId.isBlank()) {
-            correlationId = UUID.randomUUID().toString();
-        }
+		String correlationId = exchange.getRequest().getHeaders().getFirst(CORRELATION_ID_HEADER);
 
-        ServerHttpRequest request = exchange.getRequest()
-                .mutate()
-                .header(CORRELATION_ID, correlationId)
-                .build();
+		if (correlationId == null || correlationId.isBlank()) {
 
-        ServerWebExchange mutatedExchange = exchange.mutate()
-                .request(request)
-                .build();
+			correlationId = UUID.randomUUID().toString();
 
-        mutatedExchange.getResponse()
-                .getHeaders()
-                .add(CORRELATION_ID, correlationId);
+			log.info("Correlation ID not provided. Generated new correlationId: {}", correlationId);
 
-        return chain.filter(mutatedExchange);
-    }
+		} else {
 
-    @Override
-    public int getOrder() {
-        return -2;
-    }
+			log.info("Received correlationId from request: {}", correlationId);
+		}
+
+		final String finalCorrelationId = correlationId;
+
+		ServerHttpRequest request = exchange.getRequest().mutate().header(CORRELATION_ID_HEADER, finalCorrelationId)
+				.build();
+
+		ServerWebExchange mutatedExchange = exchange.mutate().request(request).build();
+
+		mutatedExchange.getResponse().getHeaders().set(CORRELATION_ID_HEADER, finalCorrelationId);
+
+		try {
+
+			MDC.put(CORRELATION_ID, finalCorrelationId);
+
+			log.info("Processing gateway request: {} {}", request.getMethod(), request.getURI().getPath());
+
+			return chain.filter(mutatedExchange).doFinally(signal -> {
+				MDC.remove(CORRELATION_ID);
+			});
+
+		} catch (Exception ex) {
+
+			MDC.remove(CORRELATION_ID);
+
+			log.error("Error processing gateway request with correlationId: {}", finalCorrelationId, ex);
+
+			throw ex;
+		}
+	}
+
+	@Override
+	public int getOrder() {
+		return Ordered.HIGHEST_PRECEDENCE;
+	}
 }

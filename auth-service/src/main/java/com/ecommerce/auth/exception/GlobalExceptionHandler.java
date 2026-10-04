@@ -14,7 +14,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    private static final Logger log =LoggerFactory.getLogger(GlobalExceptionHandler.class);
+    private static final Logger log =
+            LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleBadCredentials(
@@ -31,38 +32,37 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<ErrorResponse> handleRuntimeException(RuntimeException exception) {
+    public ResponseEntity<ErrorResponse> handleRuntimeException(
+            RuntimeException exception) {
 
-        ErrorResponse error = new ErrorResponse(LocalDateTime.now(),HttpStatus.BAD_REQUEST.value(),exception.getMessage());
+        ErrorResponse error = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                exception.getMessage());
 
         return ResponseEntity
                 .badRequest()
                 .body(error);
     }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleException(Exception exception) {
-        log.error("Unexpected server error", exception);
-        ErrorResponse error = new ErrorResponse(LocalDateTime.now(),HttpStatus.INTERNAL_SERVER_ERROR.value(),"Internal server error");
-
-        return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(error);
-    }
-    
     @ExceptionHandler(DuplicateUsernameException.class)
-    public ResponseEntity<ErrorResponse> handleDuplicateUsername( DuplicateUsernameException exception) {
+    public ResponseEntity<ErrorResponse> handleDuplicateUsername(
+            DuplicateUsernameException exception) {
 
-        ErrorResponse error = new ErrorResponse( LocalDateTime.now(), HttpStatus.CONFLICT.value(),exception.getMessage());
+        ErrorResponse error = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.CONFLICT.value(),
+                exception.getMessage());
 
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .body(error);
     }
-    
-    
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleValidationException(MethodArgumentNotValidException exception) {
+    public ResponseEntity<ErrorResponse> handleValidationException(
+            MethodArgumentNotValidException exception) {
+
         String message = exception.getBindingResult()
                 .getFieldErrors()
                 .stream()
@@ -70,10 +70,33 @@ public class GlobalExceptionHandler {
                 .findFirst()
                 .orElse("Validation failed");
 
-        ErrorResponse error = new ErrorResponse(LocalDateTime.now(), HttpStatus.BAD_REQUEST.value(),message);
+        ErrorResponse error = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                message);
 
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
+                .body(error);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleGenericException(
+            Exception exception) {
+
+        log.error(
+                "Unhandled exception: type={} message={}",
+                exception.getClass().getSimpleName(),
+                exception.getMessage(),
+                exception);
+
+        ErrorResponse error = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                "Internal server error");
+
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(error);
     }
 }

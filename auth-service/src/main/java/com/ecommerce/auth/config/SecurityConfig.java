@@ -1,6 +1,7 @@
 package com.ecommerce.auth.config;
 
 import org.slf4j.Logger;
+import com.ecommerce.auth.filter.CorrelationIdFilter;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,10 +23,14 @@ public class SecurityConfig {
             LoggerFactory.getLogger(SecurityConfig.class);
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final CorrelationIdFilter correlationIdFilter;
 
     public SecurityConfig(
-            JwtAuthenticationFilter jwtAuthenticationFilter) {
+            JwtAuthenticationFilter jwtAuthenticationFilter,
+            CorrelationIdFilter correlationIdFilter) {
+
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.correlationIdFilter = correlationIdFilter;
     }
 
     @Bean
@@ -65,7 +70,12 @@ public class SecurityConfig {
 
                 .anyRequest().authenticated()
             )
-            .addFilterBefore(jwtAuthenticationFilter,UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(
+            	    correlationIdFilter,
+            	    UsernamePasswordAuthenticationFilter.class)
+            	.addFilterBefore(
+            	    jwtAuthenticationFilter,
+            	    UsernamePasswordAuthenticationFilter.class);
 
         SecurityFilterChain filterChain = http.build();
         log.info("Spring Security filter chain configured successfully");

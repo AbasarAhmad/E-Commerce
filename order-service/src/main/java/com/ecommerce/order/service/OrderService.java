@@ -95,6 +95,8 @@ public class OrderService {
 	public OrderCreationResult createOrder(String username, String authorizationHeader, OrderRequest request,
 			String idempotencyKey) {
 
+		log.info("Creating order. username={}, idempotencyKey={}", username, idempotencyKey);
+
 		if (idempotencyKey == null || idempotencyKey.isBlank()) {
 			throw new InvalidOrderRequestException("Idempotency-Key header is required");
 		}
@@ -103,15 +105,20 @@ public class OrderService {
 			throw new InvalidOrderRequestException(
 					"Idempotency-Key cannot exceed " + MAX_IDEMPOTENCY_KEY_LENGTH + " characters");
 		}
+
 		if (!IDEMPOTENCY_KEY_PATTERN.matcher(idempotencyKey).matches()) {
 			throw new InvalidOrderRequestException("Idempotency-Key contains invalid characters");
 		}
 
 		UserResponse userResponse = authServiceClient.getUserByUsername(username, authorizationHeader);
 		Long userId = userResponse.getId();
+
 		Optional<Order> existingOrder = orderRepository.findByIdempotencyKeyAndUserId(idempotencyKey, userId);
 
 		if (existingOrder.isPresent()) {
+			log.info("Returning existing order for duplicate idempotency key. orderId={}, username={}",
+					existingOrder.get().getId(), username);
+
 			return new OrderCreationResult(orderMapper.toResponse(existingOrder.get()), false);
 		}
 
@@ -119,6 +126,7 @@ public class OrderService {
 
 		Order order = orderCreationService.create(userResponse.getId());
 		order.setIdempotencyKey(idempotencyKey);
+
 		List<ProductInternalResponse> products = new ArrayList<>();
 
 		try {
@@ -129,6 +137,9 @@ public class OrderService {
 						authorizationHeader);
 
 				if (product.getQuantity() < itemRequest.getQuantity()) {
+					log.warn("Insufficient product quantity. productId={}, requestedQuantity={}, availableQuantity={}",
+							product.getId(), itemRequest.getQuantity(), product.getQuantity());
+
 					throw new InsufficientProductQuantityException(
 							"Insufficient quantity for product: " + product.getId());
 				}
@@ -136,10 +147,12 @@ public class OrderService {
 				OrderItem orderItem = orderItemBuilder.build(itemRequest, product);
 
 				orderItem.setOrder(order);
-
 				order.getItems().add(orderItem);
 
 				orderInventoryService.decrease(product.getId(), itemRequest.getQuantity(), authorizationHeader);
+
+				log.debug("Product quantity reserved. productId={}, quantity={}", product.getId(),
+						itemRequest.getQuantity());
 
 				products.add(product);
 			}
@@ -147,6 +160,9 @@ public class OrderService {
 			order.setTotalAmount(orderTotalCalculator.calculate(order.getItems()));
 
 			if (order.getTotalAmount().compareTo(MAX_ORDER_AMOUNT) > 0) {
+				log.warn("Order total exceeds maximum allowed amount. totalAmount={}, maxAmount={}",
+						order.getTotalAmount(), MAX_ORDER_AMOUNT);
+
 				throw new InvalidOrderRequestException("Order total cannot exceed ₹1,000,000");
 			}
 
@@ -154,34 +170,49 @@ public class OrderService {
 
 			try {
 				savedOrder = orderRepository.save(order);
+
 			} catch (DataIntegrityViolationException ex) {
 
 				if (isIdempotencyKeyViolation(ex)) {
+					log.info(
+							"Concurrent request detected for idempotency key. Fetching existing order. idempotencyKey={}",
+							idempotencyKey);
+
 					Order existingOrder1 = getExistingOrderByIdempotencyKey(idempotencyKey);
 
 					return new OrderCreationResult(orderMapper.toResponse(existingOrder1), true);
 				}
+
 				throw ex;
 			}
 
 			orderHistoryService.record(savedOrder, OrderStatus.CREATED);
 
+			log.info("Order created successfully. orderId={}, userId={}, totalAmount={}", savedOrder.getId(), userId,
+					savedOrder.getTotalAmount());
+
 			return new OrderCreationResult(orderMapper.toResponse(savedOrder), true);
 
 		} catch (RuntimeException e) {
 
+			log.error("Order creation failed. username={}, idempotencyKey={}. Starting inventory compensation.",
+					username, idempotencyKey, e);
+
 			for (int i = 0; i < products.size(); i++) {
 
 				ProductInternalResponse product = products.get(i);
-
 				OrderItemRequest itemRequest = request.getItems().get(i);
 
 				try {
 					orderInventoryService.restore(product.getId(), itemRequest.getQuantity(), authorizationHeader);
 
+					log.debug("Inventory restored during order creation compensation. productId={}, quantity={}",
+							product.getId(), itemRequest.getQuantity());
+
 				} catch (RuntimeException compensationException) {
 
-					log.error("Failed to restore product {} quantity {} " + "during order creation compensation",
+					log.error(
+							"Failed to restore product quantity during order creation compensation. productId={}, quantity={}",
 							product.getId(), itemRequest.getQuantity(), compensationException);
 				}
 			}
@@ -210,12 +241,14 @@ public class OrderService {
 
 		if ("ROLE_ADMIN".equals(role)) {
 
+			// Admin can view orders from all users.
 			orders = orderRepository.findAll(pageable);
 
 		} else {
 
 			UserResponse userResponse = authServiceClient.getUserByUsername(username, authorizationHeader);
 
+			// Regular users can only view their own orders.
 			orders = orderRepository.findByUserId(userResponse.getId(), pageable);
 		}
 
@@ -229,8 +262,11 @@ public class OrderService {
 	public OrderResponse updateOrderStatus(Long orderId, String status, Boolean isAdmin, String authorizationHeader) {
 
 		if (!isAdmin) {
+			log.warn("Unauthorized attempt to update order status. orderId={}", orderId);
+
 			throw new AccessDeniedException("Only admin can update order status");
 		}
+
 		Order order = orderRepository.findById(orderId)
 				.orElseThrow(() -> new OrderNotFoundException("Order not found with id: " + orderId));
 
@@ -238,14 +274,21 @@ public class OrderService {
 
 		OrderStatus newStatus = validateStatusTransition(currentStatus, status);
 
+		log.info("Updating order status. orderId={}, currentStatus={}, newStatus={}", orderId, currentStatus,
+				newStatus);
+
 		if (newStatus == OrderStatus.CANCELLED) {
+			// Restore product stock before marking the order as cancelled.
 			restoreOrderItems(order, authorizationHeader);
 		}
 
 		order.setStatus(newStatus);
+
 		Order updatedOrder = orderRepository.save(order);
 
 		orderHistoryService.record(updatedOrder, newStatus);
+
+		log.info("Order status updated successfully. orderId={}, status={}", orderId, newStatus);
 
 		return orderMapper.toResponse(updatedOrder);
 	}
@@ -257,37 +300,47 @@ public class OrderService {
 		}
 
 		if (!order.getUserId().equals(userId)) {
+			log.warn("User attempted to access another user's order. orderId={}, userId={}", order.getId(), userId);
+
 			throw new OrderNotFoundException("Order not found with id: " + order.getId());
 		}
 	}
 
+	
 	private OrderStatus validateStatusTransition(OrderStatus currentStatus, String requestedStatus) {
 
 		final OrderStatus newStatus;
 
 		try {
 			newStatus = OrderStatus.valueOf(requestedStatus.toUpperCase());
+
 		} catch (IllegalArgumentException e) {
+			log.warn("Invalid order status requested. status={}", requestedStatus);
+
 			throw new InvalidOrderStatusException("Invalid order status: " + requestedStatus);
 		}
 
+		// Prevent invalid state changes such as DELIVERED -> CREATED.
 		currentStatus.validateTransitionTo(newStatus);
 
 		return newStatus;
 	}
 
+	
+	
 	private void restoreOrderItems(Order order, String authorizationHeader) {
 
 		List<OrderItem> restoredItems = new ArrayList<>();
 
 		try {
 
-			log.info("Cancelling order {} with {} items", order.getId(), order.getItems().size());
+			log.info("Restoring inventory for cancelled order. orderId={}, itemCount={}", order.getId(),
+					order.getItems().size());
 
 			for (OrderItem item : order.getItems()) {
 
-				log.info("Restoring product {} quantity {} for order {}", item.getProductId(), item.getQuantity(),
-						order.getId());
+				log.debug("Restoring product quantity. orderId={}, productId={}, quantity={}", order.getId(),
+						item.getProductId(), item.getQuantity());
 
 				orderInventoryService.restore(item.getProductId(), item.getQuantity(), authorizationHeader);
 
@@ -298,6 +351,10 @@ public class OrderService {
 
 			log.error("Inventory restoration failed for order {}. Starting compensation.", order.getId(), e);
 
+			/*
+			 * Some items may already have been restored before another item failed.
+			 * Decrease those quantities again to return inventory to its previous state.
+			 */
 			for (OrderItem item : restoredItems) {
 
 				try {
@@ -314,9 +371,11 @@ public class OrderService {
 		}
 	}
 
+	
 	@Transactional(readOnly = true)
 	public OrderStatusResponse getOrderStatus(Long orderId, String username, boolean isAdmin,
 			String authorizationHeader) {
+
 		UserResponse userResponse = authServiceClient.getUserByUsername(username, authorizationHeader);
 
 		Order order = orderRepository.findById(orderId)
@@ -324,10 +383,10 @@ public class OrderService {
 
 		validateOrderAccess(order, userResponse.getId(), isAdmin);
 
-//		return new OrderStatusResponse(order.getId(), order.getStatus().name());
 		return orderMapper.toStatusResponse(order);
 	}
 
+	
 	@Transactional
 	public OrderResponse cancelOrder(Long orderId, String username, boolean isAdmin, String authorizationHeader) {
 
@@ -339,24 +398,37 @@ public class OrderService {
 		validateOrderAccess(order, userResponse.getId(), isAdmin);
 
 		if (!order.getStatus().canBeCancelled()) {
+
+			log.warn("Order cannot be cancelled due to current status. orderId={}, status={}", orderId,
+					order.getStatus());
+
 			throw new InvalidOrderStatusException("Order with status " + order.getStatus() + " cannot be cancelled");
 		}
+
+		log.info("Cancelling order. orderId={}, currentStatus={}", orderId, order.getStatus());
 
 		restoreOrderItems(order, authorizationHeader);
 
 		order.setStatus(OrderStatus.CANCELLED);
 
 		Order updatedOrder = orderRepository.save(order);
+
 		orderHistoryService.record(updatedOrder, OrderStatus.CANCELLED);
+
+		log.info("Order cancelled successfully. orderId={}", orderId);
+
 		return orderMapper.toResponse(updatedOrder);
 	}
 
+	
 	@Transactional(readOnly = true)
 	public OrderStatusHistoryPageResponse getOrderStatusHistory(Long orderId, String username, Boolean isAdmin,
 			String authorizationHeader, Pageable pageable) {
+
 		if (pageable.getPageNumber() < 0) {
 			throw new InvalidOrderRequestException("Page number cannot be negative");
 		}
+
 		UserResponse userResponse = authServiceClient.getUserByUsername(username, authorizationHeader);
 
 		Order order = orderRepository.findById(orderId)
@@ -364,13 +436,8 @@ public class OrderService {
 
 		validateOrderAccess(order, userResponse.getId(), isAdmin);
 
-//		Page<OrderStatusHistory> historyPage = orderStatusHistoryRepository.findByOrderIdOrderByChangedAtAsc(orderId,
-//				pageable);
 		Page<OrderStatusHistoryResponse> responsePage = orderHistoryService.getHistory(orderId, pageable);
-//		Page<OrderStatusHistoryResponse> responsePage = historyPage.map(orderMapper::toStatusHistoryResponse);
 
-//		return new OrderStatusHistoryPageResponse(responsePage.getContent(), responsePage.getNumber(),
-//				responsePage.getSize(), responsePage.getTotalElements(), responsePage.getTotalPages());
 		return new OrderStatusHistoryPageResponse(responsePage.getContent(), responsePage.getNumber(),
 				responsePage.getSize(), responsePage.getTotalElements(), responsePage.getTotalPages());
 	}
@@ -392,10 +459,13 @@ public class OrderService {
 	}
 
 	private boolean isIdempotencyKeyViolation(DataIntegrityViolationException ex) {
+
 		Throwable cause = ex;
 
 		while (cause != null) {
+
 			if (cause.getMessage() != null && cause.getMessage().contains("uk_orders_idempotency_key")) {
+
 				return true;
 			}
 
@@ -407,6 +477,7 @@ public class OrderService {
 
 	private Order getExistingOrderByIdempotencyKey(String idempotencyKey) {
 
+		// Return the order created by the request that used this key first.
 		return orderRepository.findByIdempotencyKey(idempotencyKey)
 				.orElseThrow(() -> new DuplicateIdempotencyKeyException("Idempotency-Key has already been used"));
 	}

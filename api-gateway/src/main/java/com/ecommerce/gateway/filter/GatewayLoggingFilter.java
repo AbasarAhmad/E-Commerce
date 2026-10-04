@@ -12,33 +12,40 @@ import reactor.core.publisher.Mono;
 
 @Component
 public class GatewayLoggingFilter implements GlobalFilter, Ordered {
-	
-    private static final Logger log =LoggerFactory.getLogger(GatewayLoggingFilter.class);
-    
-    @Override
-    public Mono<Void> filter(ServerWebExchange exchange,GatewayFilterChain chain) {
 
-        long startTime = System.currentTimeMillis();
-        String method = exchange.getRequest().getMethod().name();
-        String path = exchange.getRequest().getURI().getPath();
-        log.info("Gateway Request: method={}, path={}", method, path);
-        
-        return chain.filter(exchange)
-                .then(Mono.fromRunnable(() -> {
-                    long timeTaken =System.currentTimeMillis() - startTime;
-                    int statusCode = exchange.getResponse()
-                            .getStatusCode() != null
-                            ? exchange.getResponse()
-                                    .getStatusCode()
-                                    .value()
-                            : 0;
-                    
-                    log.info("Gateway Response: method={}, path={}, status={}, timeTaken={}ms",method,path,statusCode,timeTaken);
-                }));
-    }
+	private static final Logger log = LoggerFactory.getLogger(GatewayLoggingFilter.class);
 
-    @Override
-    public int getOrder() {
-        return -1;
-    }
+	@Override
+	public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+
+		long startTime = System.currentTimeMillis();
+
+		String method = exchange.getRequest().getMethod().name();
+		String path = exchange.getRequest().getURI().getPath();
+
+		log.info("Gateway Request: method={}, path={}", method, path);
+
+		return chain.filter(exchange)
+				.doFinally(signal -> {
+
+					long executionTime = System.currentTimeMillis() - startTime;
+
+					int statusCode = exchange.getResponse().getStatusCode() != null
+							? exchange.getResponse().getStatusCode().value()
+							: 0;
+
+					log.info(
+							"HTTP request completed: method={} uri={} status={} executionTime={}ms",
+							method,
+							path,
+							statusCode,
+							executionTime
+					);
+				});
+	}
+
+	@Override
+	public int getOrder() {
+		return -1;
+	}
 }
