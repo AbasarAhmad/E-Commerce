@@ -1,0 +1,2 @@
+ALTER TABLE order_items
+MODIFY COLUMN created_at DATETIME(6) NOT NULL;

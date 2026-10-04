@@ -1,0 +1,2 @@
+ALTER TABLE order_items
+ADD COLUMN created_at DATETIME(6) NULL;

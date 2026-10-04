@@ -1,10 +1,11 @@
 package com.ecommerce.order.entity;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -12,21 +13,20 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
-import jakarta.persistence.Version;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
 @Entity
-@Table(name = "order_items")
+@Table(name = "order_status_history")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class OrderItem {
+public class OrderStatusHistory {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -36,27 +36,15 @@ public class OrderItem {
     @JoinColumn(name = "order_id", nullable = false)
     private Order order;
 
-    @Column(nullable = false)
-    private Long productId;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 50)
+    private OrderStatus status;
 
     @Column(nullable = false)
-    private Integer quantity;
-
-    @Column(nullable = false, precision = 19, scale = 2)
-    private BigDecimal unitPrice;
-
-    @Column(nullable = false, precision = 19, scale = 2)
-    private BigDecimal subtotal;
-    
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-    
-    @Version
-    @Column(nullable = false)
-    private Long version;
+    private LocalDateTime changedAt;
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
+        changedAt = LocalDateTime.now();
     }
 }

@@ -1,6 +1,7 @@
 package com.ecommerce.order.dto;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -14,4 +15,5 @@ public class OrderItemResponse {
     private Integer quantity;
     private BigDecimal unitPrice;
     private BigDecimal subtotal;
+    private LocalDateTime createdAt;
 }
